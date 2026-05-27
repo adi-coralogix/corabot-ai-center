@@ -20,8 +20,8 @@ if (disabled) {
 	delete process.env.OTEL_EXPORTER_OTLP_HEADERS;
 	process.env.OTEL_RESOURCE_ATTRIBUTES =
 		process.env.OTEL_RESOURCE_ATTRIBUTES ||
-		'service.name=svelte-chatbot,cx.application.name=svelte-chatbot,cx.subsystem.name=chat-api,service.namespace=svelterum';
-	process.env.OTEL_SERVICE_NAME = process.env.OTEL_SERVICE_NAME || 'svelte-chatbot';
+		'service.name=corabot-ai-center,cx.application.name=corabot-ai-center,cx.subsystem.name=frontend,service.namespace=corabot';
+	process.env.OTEL_SERVICE_NAME = process.env.OTEL_SERVICE_NAME || 'corabot-ai-center';
 	process.env.OTEL_NODE_RESOURCE_DETECTORS = 'env,host,os,process';
 	console.log('[OTEL] Exporting traces to local OTLP collector at', endpoint);
 

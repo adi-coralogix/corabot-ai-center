@@ -19,7 +19,7 @@ services:
     environment:
       OPENAI_API_KEY: ${OPENAI_API_KEY}
       CORALOGIX_GUARDRAILS_KEY: ${CORALOGIX_GUARDRAILS_KEY}
-      CX_GUARDRAILS_ENDPOINT: ${CX_GUARDRAILS_ENDPOINT:-https://api.coralogix.com/api/v1/guardrails/guard}
+      CX_GUARDRAILS_ENDPOINT: ${CX_GUARDRAILS_ENDPOINT:-https://api.cx498.coralogix.com/api/v1/guardrails/guard}
       GUARDRAILS_ENABLED: ${GUARDRAILS_ENABLED:-false}
       GUARDRAIL_DEMO_PROBABILITY: ${GUARDRAIL_DEMO_PROBABILITY:-0}
       OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
@@ -45,6 +45,7 @@ services:
       CHAT_API_ORIGIN: http://backend:8000
       OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
       OTEL_EXPORTER_OTLP_INSECURE: "true"
+      OTEL_SERVICE_NAME: corabot-ai-center
     depends_on:
       - backend
       - otel-collector
