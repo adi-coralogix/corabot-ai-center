@@ -51,11 +51,15 @@ services:
     restart: unless-stopped
 
   # ── Google OAuth2 gate (@coralogix.com only) ─────────────────────────────
-  # oauth2-proxy sits between Caddy and the frontend.
-  # Unauthenticated requests are redirected to Google Sign-In; only accounts
-  # with an @coralogix.com email are allowed through.
+  # oauth2-proxy is the public entry point on port 80.
+  # CloudFront sits in front and handles TLS (*.cloudfront.net HTTPS URL).
+  # --reverse-proxy tells oauth2-proxy to trust the X-Forwarded-Proto: https
+  # header that CloudFront injects, so cookies are set correctly.
+  # Only accounts with an @coralogix.com Google email are let through.
   oauth2-proxy:
     image: quay.io/oauth2-proxy/oauth2-proxy:v7
+    ports:
+      - "80:4180"
     command:
       - --provider=google
       - --email-domain=coralogix.com
@@ -67,6 +71,7 @@ services:
       - --cookie-expire=8h
       - --pass-access-token=false
       - --skip-provider-button=true
+      - --reverse-proxy=true
     environment:
       OAUTH2_PROXY_CLIENT_ID: ${OAUTH2_PROXY_CLIENT_ID}
       OAUTH2_PROXY_CLIENT_SECRET: ${OAUTH2_PROXY_CLIENT_SECRET}
@@ -74,24 +79,3 @@ services:
     depends_on:
       - frontend
     restart: unless-stopped
-
-  # ── TLS termination + HTTP→HTTPS redirect ───────────────────────────────
-  # Caddy auto-provisions and renews Let's Encrypt certificates.
-  # DOMAIN is read from the .env file at runtime via Caddy's {$DOMAIN} syntax.
-  caddy:
-    image: caddy:2-alpine
-    ports:
-      - "80:80"
-      - "443:443"
-      - "443:443/udp"   # HTTP/3
-    volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
-      - caddy_data:/data
-      - caddy_config:/config
-    depends_on:
-      - oauth2-proxy
-    restart: unless-stopped
-
-volumes:
-  caddy_data:   # persists Let's Encrypt certificates across container restarts
-  caddy_config:

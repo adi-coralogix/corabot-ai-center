@@ -53,15 +53,12 @@ jq -r 'to_entries[] | "\(.key)=\(.value)"' <<< "$SECRET_JSON" > "$APP_DIR/.env"
 chmod 600 "$APP_DIR/.env"
 echo "[$(date -u +%FT%TZ)] .env written ($(wc -l < "$APP_DIR/.env") vars)."
 
-# ── 6. Place Caddyfile ────────────────────────────────────────────────────────
-cp "$APP_DIR/deploy/ec2/Caddyfile" "$APP_DIR/Caddyfile"
-
-# ── 7. Build and start the stack ─────────────────────────────────────────────
+# ── 6. Build and start the stack ─────────────────────────────────────────────
 echo "[$(date -u +%FT%TZ)] Starting docker compose stack..."
 cd "$APP_DIR"
 docker compose up -d --build
 
-# ── 8. Install systemd unit for auto-restart on reboot ───────────────────────
+# ── 7. Install systemd unit for auto-restart on reboot ───────────────────────
 cat > /etc/systemd/system/corabot.service <<'UNIT'
 [Unit]
 Description=CoraBot AI Center (docker compose)

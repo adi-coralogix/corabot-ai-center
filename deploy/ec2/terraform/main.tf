@@ -16,21 +16,22 @@ provider "aws" {
   region = var.region
 }
 
+# CloudFront is a global service — its resources must be managed in us-east-1.
+provider "aws" {
+  alias  = "us_east_1"
+  region = "us-east-1"
+}
+
 # ── Variables ──────────────────────────────────────────────────────────────
 
 variable "region" {
-  description = "AWS region"
+  description = "AWS region for EC2 and Secrets Manager"
   type        = string
   default     = "us-west-2"
 }
 
 variable "key_pair_name" {
   description = "Name of an existing EC2 key pair for SSH access"
-  type        = string
-}
-
-variable "domain" {
-  description = "Public hostname for the app (e.g. corabot.coralogix.com)"
   type        = string
 }
 
@@ -80,7 +81,7 @@ variable "guardrails_enabled" {
 }
 
 variable "vite_coralogix_rum_key" {
-  description = "Coralogix RUM public key (baked into the JS bundle)"
+  description = "Coralogix RUM public key (baked into the JS bundle at build time)"
   type        = string
   sensitive   = true
 }
@@ -110,46 +111,6 @@ variable "google_client_secret" {
 resource "random_password" "oauth2_cookie_secret" {
   length  = 32
   special = false
-}
-
-# ── AWS Secrets Manager ─────────────────────────────────────────────────────
-# All runtime env vars are stored as a single JSON secret.
-# The EC2 instance reads this at boot using its IAM role — no static credentials needed.
-
-resource "aws_secretsmanager_secret" "app" {
-  name                    = "corabot-ai-center/env"
-  description             = "All runtime environment variables for corabot-ai-center"
-  recovery_window_in_days = 0 # allow immediate deletion when tearing down
-}
-
-resource "aws_secretsmanager_secret_version" "app" {
-  secret_id = aws_secretsmanager_secret.app.id
-  secret_string = jsonencode({
-    # OTLP (internal compose network — no change needed)
-    OTEL_EXPORTER_OTLP_ENDPOINT = "http://otel-collector:4317"
-    OTEL_EXPORTER_OTLP_INSECURE = "true"
-
-    # Coralogix
-    CORALOGIX_PRIVATE_KEY    = var.coralogix_private_key
-    GUARDRAILS_ENABLED       = var.guardrails_enabled
-    CORALOGIX_GUARDRAILS_KEY = var.coralogix_guardrails_key
-    CX_GUARDRAILS_ENDPOINT   = var.cx_guardrails_endpoint
-
-    # RUM
-    VITE_CORALOGIX_RUM_KEY  = var.vite_coralogix_rum_key
-    PUBLIC_CORALOGIX_DOMAIN = var.public_coralogix_domain
-
-    # OpenAI
-    OPENAI_API_KEY = var.openai_api_key
-
-    # App domain (used by oauth2-proxy redirect URL in docker-compose)
-    DOMAIN = var.domain
-
-    # Google OAuth2 / oauth2-proxy
-    OAUTH2_PROXY_CLIENT_ID     = var.google_client_id
-    OAUTH2_PROXY_CLIENT_SECRET = var.google_client_secret
-    OAUTH2_PROXY_COOKIE_SECRET = random_password.oauth2_cookie_secret.result
-  })
 }
 
 # ── IAM: EC2 role that can read the secret ──────────────────────────────────
@@ -188,23 +149,17 @@ resource "aws_iam_instance_profile" "corabot" {
 }
 
 # ── Security Group ───────────────────────────────────────────────────────────
+# EC2 only needs port 80 for CloudFront → origin traffic.
+# Port 443 is terminated at CloudFront; browsers never hit EC2 directly.
 
 resource "aws_security_group" "corabot" {
   name        = "corabot-ai-center"
-  description = "CoraBot AI Center — HTTP, HTTPS, SSH"
+  description = "CoraBot AI Center — HTTP from CloudFront, SSH"
 
   ingress {
-    description = "HTTP — Caddy redirects to HTTPS"
+    description = "HTTP — CloudFront origin requests"
     from_port   = 80
     to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  ingress {
-    description = "HTTPS"
-    from_port   = 443
-    to_port     = 443
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
@@ -256,7 +211,7 @@ resource "aws_instance" "corabot" {
     region     = var.region
   })
 
-  # Re-provision if user_data changes (e.g. after secret rotation)
+  # Re-provision if user_data changes (e.g. after a secret rotation requires a stack restart)
   user_data_replace_on_change = true
 
   tags = {
@@ -277,10 +232,132 @@ resource "aws_eip" "corabot" {
   }
 }
 
+# ── CloudFront distribution ──────────────────────────────────────────────────
+# CloudFront provides the public HTTPS URL (*.cloudfront.net) — no custom domain needed.
+# TLS is terminated here; traffic to EC2 travels over plain HTTP on port 80.
+# All headers and cookies are forwarded so oauth2-proxy auth works end-to-end.
+
+resource "aws_cloudfront_distribution" "corabot" {
+  origin {
+    domain_name = aws_eip.corabot.public_ip
+    origin_id   = "corabot-ec2"
+
+    custom_origin_config {
+      http_port              = 80
+      https_port             = 443
+      origin_protocol_policy = "http-only"
+      origin_ssl_protocols   = ["TLSv1.2"]
+    }
+
+    # Tell oauth2-proxy the request arrived over HTTPS even though CloudFront
+    # forwards it to EC2 over HTTP.
+    custom_header {
+      name  = "X-Forwarded-Proto"
+      value = "https"
+    }
+  }
+
+  enabled         = true
+  is_ipv6_enabled = true
+  comment         = "CoraBot AI Center"
+
+  default_cache_behavior {
+    # Chat is fully dynamic — allow all methods, forward everything, no caching.
+    allowed_methods  = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
+    cached_methods   = ["GET", "HEAD"]
+    target_origin_id = "corabot-ec2"
+
+    forwarded_values {
+      query_string = true
+      headers      = ["*"] # forward all headers (Host, Authorization, X-Forwarded-*, …)
+      cookies {
+        forward = "all" # forward auth cookies to oauth2-proxy
+      }
+    }
+
+    viewer_protocol_policy = "redirect-to-https"
+
+    # No caching — every request goes to the origin
+    min_ttl     = 0
+    default_ttl = 0
+    max_ttl     = 0
+  }
+
+  restrictions {
+    geo_restriction {
+      restriction_type = "none"
+    }
+  }
+
+  # Use the free *.cloudfront.net certificate — no ACM or custom domain needed
+  viewer_certificate {
+    cloudfront_default_certificate = true
+  }
+
+  tags = {
+    Name    = "corabot-ai-center"
+    Project = "corabot-ai-center"
+  }
+}
+
+# ── Secrets Manager ──────────────────────────────────────────────────────────
+# DOMAIN is set to the CloudFront domain automatically — no manual input needed.
+# After apply, add https://<cloudfront_url>/oauth2/callback to your Google OAuth2
+# app's Authorized Redirect URIs, then the stack is fully operational.
+
+resource "aws_secretsmanager_secret" "app" {
+  name                    = "corabot-ai-center/env"
+  description             = "All runtime environment variables for corabot-ai-center"
+  recovery_window_in_days = 0 # allow immediate deletion when tearing down
+}
+
+resource "aws_secretsmanager_secret_version" "app" {
+  secret_id = aws_secretsmanager_secret.app.id
+  secret_string = jsonencode({
+    # OTLP (internal compose network)
+    OTEL_EXPORTER_OTLP_ENDPOINT = "http://otel-collector:4317"
+    OTEL_EXPORTER_OTLP_INSECURE = "true"
+
+    # Coralogix
+    CORALOGIX_PRIVATE_KEY    = var.coralogix_private_key
+    GUARDRAILS_ENABLED       = var.guardrails_enabled
+    CORALOGIX_GUARDRAILS_KEY = var.coralogix_guardrails_key
+    CX_GUARDRAILS_ENDPOINT   = var.cx_guardrails_endpoint
+
+    # RUM
+    VITE_CORALOGIX_RUM_KEY  = var.vite_coralogix_rum_key
+    PUBLIC_CORALOGIX_DOMAIN = var.public_coralogix_domain
+
+    # OpenAI
+    OPENAI_API_KEY = var.openai_api_key
+
+    # Domain — auto-set from CloudFront, used in oauth2-proxy redirect URL
+    DOMAIN = aws_cloudfront_distribution.corabot.domain_name
+
+    # Google OAuth2 / oauth2-proxy
+    OAUTH2_PROXY_CLIENT_ID     = var.google_client_id
+    OAUTH2_PROXY_CLIENT_SECRET = var.google_client_secret
+    OAUTH2_PROXY_COOKIE_SECRET = random_password.oauth2_cookie_secret.result
+  })
+
+  # Re-write the secret whenever the CloudFront domain or any credential changes
+  depends_on = [aws_cloudfront_distribution.corabot]
+}
+
 # ── Outputs ──────────────────────────────────────────────────────────────────
 
+output "app_url" {
+  description = "Public HTTPS URL — add /oauth2/callback to your Google OAuth2 Authorized Redirect URIs"
+  value       = "https://${aws_cloudfront_distribution.corabot.domain_name}"
+}
+
+output "google_redirect_uri" {
+  description = "Register this exact URI in Google Cloud Console → OAuth2 Credentials → Authorized redirect URIs"
+  value       = "https://${aws_cloudfront_distribution.corabot.domain_name}/oauth2/callback"
+}
+
 output "elastic_ip" {
-  description = "Create a DNS A record pointing ${var.domain} → this IP before Caddy can issue a certificate"
+  description = "EC2 Elastic IP (CloudFront origin — not accessed directly by users)"
   value       = aws_eip.corabot.public_ip
 }
 
@@ -289,17 +366,12 @@ output "ssh_command" {
   value       = "ssh -i ~/.ssh/${var.key_pair_name}.pem ec2-user@${aws_eip.corabot.public_ip}"
 }
 
-output "app_url" {
-  description = "App URL (live once DNS propagates and Caddy obtains its certificate)"
-  value       = "https://${var.domain}"
-}
-
 output "secret_arn" {
-  description = "Secrets Manager ARN — update values here to rotate keys without reprovisioning"
+  description = "Secrets Manager ARN — rotate keys here without reprovisioning EC2"
   value       = aws_secretsmanager_secret.app.arn
 }
 
 output "startup_log" {
-  description = "SSH in and tail this file to watch the first-boot setup"
-  value       = "sudo tail -f /var/log/corabot-startup.log"
+  description = "Watch first-boot setup progress"
+  value       = "ssh -i ~/.ssh/${var.key_pair_name}.pem ec2-user@${aws_eip.corabot.public_ip} 'sudo tail -f /var/log/corabot-startup.log'"
 }
