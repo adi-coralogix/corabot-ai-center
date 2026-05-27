@@ -21,7 +21,7 @@ services:
       CORALOGIX_GUARDRAILS_KEY: ${CORALOGIX_GUARDRAILS_KEY}
       CX_GUARDRAILS_ENDPOINT: ${CX_GUARDRAILS_ENDPOINT:-https://api.cx498.coralogix.com/api/v1/guardrails/guard}
       GUARDRAILS_ENABLED: ${GUARDRAILS_ENABLED:-false}
-      GUARDRAIL_DEMO_PROBABILITY: ${GUARDRAIL_DEMO_PROBABILITY:-0}
+      GUARDRAIL_DEMO_PROBABILITY: ${GUARDRAIL_DEMO_PROBABILITY:-0.03}
       OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
       OTEL_EXPORTER_OTLP_INSECURE: "true"
       OTEL_SEMCONV_STABILITY_OPT_IN: gen_ai_latest_experimental
@@ -50,6 +50,22 @@ services:
     depends_on:
       - backend
       - otel-collector
+    restart: unless-stopped
+
+  # ── Synthetic RUM traffic generator ─────────────────────────────────────
+  # Puppeteer loop hitting the frontend directly (bypasses oauth2-proxy).
+  # Sends a full session every RUM_HARNESS_INTERVAL_MS (default 5 min).
+  rum-harness:
+    build:
+      context: .
+      dockerfile: deploy/docker/Dockerfile.harness
+    environment:
+      BASE_URL: http://frontend:3000
+      RUM_HARNESS_CHAT_TIMEOUT_MS: "120000"
+      RUM_HARNESS_NAV_TIMEOUT_MS: "60000"
+    depends_on:
+      - frontend
+      - backend
     restart: unless-stopped
 
   # ── Google OAuth2 gate (@coralogix.com only) ─────────────────────────────
