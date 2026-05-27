@@ -4,5 +4,5 @@ openai>=1.0.0
 llm-tracekit[openai]==1.0.2
 cx-guardrails>=1.0.0
 opentelemetry-instrumentation-fastapi>=0.49b0
-opentelemetry-exporter-otlp-proto-grpc>=1.27.0
+opentelemetry-exporter-otlp-proto-grpc>=1.30.0
 python-dotenv>=1.0.0
