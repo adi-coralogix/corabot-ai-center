@@ -498,7 +498,11 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="Chat API", lifespan=lifespan)
 # Exclude K8s probe paths — readiness/liveness hit /health every minute; no APM noise.
-FastAPIInstrumentor.instrument_app(app, excluded_urls="health")
+FastAPIInstrumentor.instrument_app(
+    app,
+    excluded_urls="health",
+    exclude_spans=["receive", "send"],
+)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
