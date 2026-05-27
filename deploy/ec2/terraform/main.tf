@@ -16,12 +16,6 @@ provider "aws" {
   region = var.region
 }
 
-# CloudFront is a global service — its resources must be managed in us-east-1.
-provider "aws" {
-  alias  = "us_east_1"
-  region = "us-east-1"
-}
-
 # ── Variables ──────────────────────────────────────────────────────────────
 
 variable "region" {
@@ -154,10 +148,10 @@ resource "aws_iam_instance_profile" "corabot" {
 
 resource "aws_security_group" "corabot" {
   name        = "corabot-ai-center"
-  description = "CoraBot AI Center — HTTP from CloudFront, SSH"
+  description = "CoraBot AI Center - HTTP from CloudFront, SSH"
 
   ingress {
-    description = "HTTP — CloudFront origin requests"
+    description = "HTTP - CloudFront origin requests"
     from_port   = 80
     to_port     = 80
     protocol    = "tcp"
@@ -239,7 +233,7 @@ resource "aws_eip" "corabot" {
 
 resource "aws_cloudfront_distribution" "corabot" {
   origin {
-    domain_name = aws_eip.corabot.public_ip
+    domain_name = aws_eip.corabot.public_dns
     origin_id   = "corabot-ec2"
 
     custom_origin_config {
