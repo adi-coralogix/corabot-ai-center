@@ -208,6 +208,12 @@ processors:
       - context: span
         statements:
           - keep_keys(attributes, ["db.namespace", "db.system"])
+  transform/fix_peer_service:
+    error_mode: ignore
+    trace_statements:
+      - context: span
+        statements:
+          - 'set(attributes["peer.service"], "corabot-ai-center") where attributes["peer.service"] == "backend"'
   transform/semconv:
     error_mode: ignore
     trace_statements:
@@ -329,6 +335,7 @@ service:
         - memory_limiter
         - resourcedetection/env
         - resource/metadata
+        - transform/fix_peer_service
         - transform/semconv
         - redaction/spanname
         - groupbytrace/transactions
