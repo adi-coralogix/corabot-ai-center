@@ -1,7 +1,7 @@
 fastapi>=0.115.0
 uvicorn[standard]>=0.32.0
 openai>=1.0.0
-opentelemetry-instrumentation-openai-v2>=2.0b0
+llm-tracekit[openai]>=0.1.0
 cx-guardrails>=1.0.0
 opentelemetry-instrumentation-fastapi>=0.49b0
 opentelemetry-exporter-otlp-proto-grpc>=1.27.0

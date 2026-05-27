@@ -140,7 +140,11 @@ if _otel_export_enabled:
         )
     )
     trace.set_tracer_provider(_tracer_provider)
-    from opentelemetry.instrumentation.openai_v2 import OpenAIInstrumentor
+    # llm-tracekit is Coralogix's instrumentation library — produces gen_ai.* spans in the
+    # exact format Coralogix AI Center expects (Application Catalog, conversation view, evals).
+    from llm_tracekit import OpenAIInstrumentor
+    from llm_tracekit.instrumentation_utils import enable_capture_content
+    enable_capture_content()
     OpenAIInstrumentor().instrument()
 
     from opentelemetry.exporter.otlp.proto.grpc._log_exporter import OTLPLogExporter
