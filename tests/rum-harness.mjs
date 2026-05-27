@@ -232,6 +232,13 @@ async function runHarnessSession(browser) {
 	// Set viewport for realistic RUM
 	await page.setViewport({ width: 1280, height: 720 });
 
+	// Belt-and-suspenders: even with --disable-blink-features=AutomationControlled some Chromium
+	// builds still expose navigator.webdriver via JS. Override it before any page script runs so
+	// the Coralogix RUM SDK (and any other session recording tool) cannot detect automation.
+	await page.evaluateOnNewDocument(() => {
+		Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
+	});
+
 	/** Capture structured payload from console.info('[svelteRum chat] user message', { ... }) */
 	const consoleParseTasks = [];
 	const browserChatEntries = [];
@@ -342,6 +349,9 @@ function baseChromiumArgs() {
 		'--disable-gpu',
 		'--disable-software-rasterizer',
 		'--disable-extensions',
+		// Prevent Chromium from setting navigator.webdriver = true, which RUM SDKs use
+		// as a bot signal to suppress session recording.
+		'--disable-blink-features=AutomationControlled',
 		'--disable-background-networking',
 		'--disable-background-timer-throttling',
 		'--disable-backgrounding-occluded-windows',
