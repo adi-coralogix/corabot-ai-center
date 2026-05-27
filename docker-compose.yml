@@ -1,0 +1,51 @@
+services:
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.151.0
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otel/config.yaml:ro
+    command: ["--config=/etc/otel/config.yaml"]
+    environment:
+      CORALOGIX_PRIVATE_KEY: ${CORALOGIX_PRIVATE_KEY}
+    ports:
+      - "4317:4317"   # OTLP gRPC (backend + frontend SSR → collector)
+      - "4318:4318"   # OTLP HTTP
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: .
+      dockerfile: deploy/docker/Dockerfile.backend
+    environment:
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      CORALOGIX_GUARDRAILS_KEY: ${CORALOGIX_GUARDRAILS_KEY}
+      CX_GUARDRAILS_ENDPOINT: ${CX_GUARDRAILS_ENDPOINT:-https://api.coralogix.com/api/v1/guardrails/guard}
+      GUARDRAILS_ENABLED: ${GUARDRAILS_ENABLED:-false}
+      GUARDRAIL_DEMO_PROBABILITY: ${GUARDRAIL_DEMO_PROBABILITY:-0}
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      OTEL_EXPORTER_OTLP_INSECURE: "true"
+    ports:
+      - "8000:8000"
+    depends_on:
+      - otel-collector
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: .
+      dockerfile: deploy/docker/Dockerfile.frontend
+      args:
+        # Baked into the JS bundle at build time — browser calls localhost:8000 directly (CORS enabled)
+        VITE_CORALOGIX_RUM_KEY: ${VITE_CORALOGIX_RUM_KEY}
+        VITE_CHAT_API_URL: http://localhost:8000
+    environment:
+      # Runtime env for the SvelteKit Node SSR server
+      PUBLIC_CORALOGIX_RUM_KEY: ${VITE_CORALOGIX_RUM_KEY}
+      PUBLIC_CORALOGIX_DOMAIN: ${PUBLIC_CORALOGIX_DOMAIN:-EU1}
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      OTEL_EXPORTER_OTLP_INSECURE: "true"
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+      - otel-collector
+    restart: unless-stopped

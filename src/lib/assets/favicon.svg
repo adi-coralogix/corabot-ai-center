@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" shape-rendering="crispEdges">
+  <!-- Background -->
+  <rect width="16" height="16" fill="#0a1f17"/>
+  <!-- Antennae -->
+  <rect x="5" y="1" width="1" height="2" fill="#39ff8e"/>
+  <rect x="10" y="1" width="1" height="2" fill="#39ff8e"/>
+  <!-- Head top and bottom bars -->
+  <rect x="3" y="3" width="10" height="1" fill="#39ff8e"/>
+  <rect x="3" y="11" width="10" height="1" fill="#39ff8e"/>
+  <!-- Head side bars -->
+  <rect x="3" y="4" width="1" height="7" fill="#39ff8e"/>
+  <rect x="12" y="4" width="1" height="7" fill="#39ff8e"/>
+  <!-- Left eye -->
+  <rect x="5" y="5" width="2" height="2" fill="#39ff8e"/>
+  <!-- Right eye -->
+  <rect x="9" y="5" width="2" height="2" fill="#39ff8e"/>
+  <!-- Mouth: corners then arc -->
+  <rect x="5" y="8" width="1" height="1" fill="#39ff8e"/>
+  <rect x="10" y="8" width="1" height="1" fill="#39ff8e"/>
+  <rect x="6" y="9" width="4" height="1" fill="#39ff8e"/>
+  <!-- Neck connectors -->
+  <rect x="5" y="12" width="2" height="2" fill="#39ff8e"/>
+  <rect x="9" y="12" width="2" height="2" fill="#39ff8e"/>
+</svg>

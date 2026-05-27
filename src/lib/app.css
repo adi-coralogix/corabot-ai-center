@@ -1,0 +1,48 @@
+:root {
+	/* 8-bit Coralogix green palette */
+	--bg-dark: #0a1f17;
+	--bg-card: #13302a;
+	--bg-panel: #1d4a3b;
+	--accent: #39ff8e;        /* bright Coralogix green (primary) */
+	--accent-hot: #00d4aa;    /* teal */
+	--accent-cyan: #7fffd4;   /* mint aqua */
+	--accent-lime: #b6ff5a;   /* yellow-lime */
+	--accent-orange: #ffaa00; /* warm contrast (used inside pixel art only) */
+	--text: #e8f5e9;
+	--text-muted: #7fb89e;
+	--border: #000000;
+	--shadow: #000000;
+}
+
+* {
+	box-sizing: border-box;
+	image-rendering: pixelated;
+}
+
+html,
+body {
+	height: 100%;
+	margin: 0;
+}
+
+body {
+	font-family: 'VT323', 'Courier New', monospace;
+	font-size: 18px;
+	background: var(--bg-dark);
+	background-image:
+		linear-gradient(rgba(57, 255, 142, 0.05) 1px, transparent 1px),
+		linear-gradient(90deg, rgba(57, 255, 142, 0.05) 1px, transparent 1px);
+	background-size: 16px 16px;
+	color: var(--text);
+	overflow: hidden;
+	-webkit-font-smoothing: none;
+	-moz-osx-font-smoothing: grayscale;
+}
+
+/* Pixel-font headings */
+h1, h2, h3, h4 {
+	font-family: 'Press Start 2P', 'VT323', monospace;
+	letter-spacing: 0.05em;
+	line-height: 1.4;
+	text-transform: uppercase;
+}
