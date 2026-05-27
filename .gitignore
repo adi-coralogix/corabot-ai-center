@@ -24,6 +24,14 @@ deploy/k8s/ai-agent-sim/secret-generator.env
 !.env.example
 !.env.test
 
+# Terraform
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfvars.json
+.terraform.lock.hcl
+
 # Vite
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*

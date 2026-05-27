@@ -1,0 +1,8 @@
+# Caddy reverse proxy — auto-provisions and renews Let's Encrypt TLS.
+# DOMAIN is substituted at runtime by the startup script (cp deploy/ec2/Caddyfile ./Caddyfile).
+# All traffic passes through oauth2-proxy, which enforces @coralogix.com Google Sign-In
+# before forwarding authenticated requests to the frontend container.
+
+{$DOMAIN} {
+    reverse_proxy oauth2-proxy:4180
+}
