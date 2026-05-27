@@ -77,7 +77,7 @@ data:
                             },
                             {
                                 "key": "cx.application.name",
-                                "value": {"stringValue": "svelte-chatbot"},
+                                "value": {"stringValue": "corabot-ai-center"},
                             },
                             {
                                 "key": "cx.subsystem.name",

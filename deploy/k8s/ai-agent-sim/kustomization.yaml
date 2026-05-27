@@ -19,7 +19,7 @@ generatorOptions:
   disableNameSuffixHash: true
 
 secretGenerator:
-  - name: svelte-chatbot-app
+  - name: corabot-ai-center-app
     envs:
       - secret-generator.env
 

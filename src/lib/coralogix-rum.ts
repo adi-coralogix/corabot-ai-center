@@ -63,9 +63,9 @@ export async function initCoralogixRum(
 	_lastInitKey = key;
 	_lastInitDomain = coralogixDomain;
 	// Harness traffic is fully isolated: separate `application` + `environment` so dashboards
-	// filtered on `application=svelte-chatbot` see only real users.
+	// filtered on `application=corabot-ai-center` see only real users.
 	const isSynthetic = /test_harness/i.test(navigator.userAgent || '');
-	const application = isSynthetic ? 'svelte-chatbot-synthetic' : 'svelte-chatbot';
+	const application = isSynthetic ? 'corabot-ai-center-synthetic' : 'corabot-ai-center';
 	const environment = isSynthetic
 		? 'synthetic'
 		: import.meta.env.DEV

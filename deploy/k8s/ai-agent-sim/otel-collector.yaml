@@ -186,7 +186,7 @@ data:
         attributes:
           - key: cx.otel_integration.name
             action: upsert
-            value: svelte-chatbot-ai-agent-sim
+            value: corabot-ai-center-ai-agent-sim
           - key: k8s.cluster.name
             action: upsert
             value: ai-agent-sim-cluster
@@ -316,7 +316,7 @@ data:
         timeout: 30s
         logs:
           headers:
-            X-Coralogix-Distribution: svelte-chatbot-kustomize/1.0
+            X-Coralogix-Distribution: corabot-ai-center-kustomize/1.0
             x-coralogix-ingress: metadata-as-otlp-logs/v1
       coralogix/resource_catalog_b:
         domain: ${env:CORALOGIX_DOMAIN_TEAM_B}
@@ -326,7 +326,7 @@ data:
         timeout: 30s
         logs:
           headers:
-            X-Coralogix-Distribution: svelte-chatbot-kustomize/1.0
+            X-Coralogix-Distribution: corabot-ai-center-kustomize/1.0
             x-coralogix-ingress: metadata-as-otlp-logs/v1
 
       # Coralogix egress: IPv4 literal + TLS SNI (server_name_override) — EKS nodes here have no IPv6 path;
@@ -569,12 +569,12 @@ spec:
             - name: CORALOGIX_OTEL_KEY_TEAM_A
               valueFrom:
                 secretKeyRef:
-                  name: svelte-chatbot-app
+                  name: corabot-ai-center-app
                   key: coralogix-otel-key-team-a
             - name: CORALOGIX_OTEL_KEY_TEAM_B
               valueFrom:
                 secretKeyRef:
-                  name: svelte-chatbot-app
+                  name: corabot-ai-center-app
                   key: coralogix-otel-key-team-b
             # IPv4 + SNI for ingress.us2 / ingress.eu1 (see exporters comment above).
             - name: CORALOGIX_INGRESS_ENDPOINT_TEAM_A

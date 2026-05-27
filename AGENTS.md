@@ -48,7 +48,7 @@ Local: start Vite + API first, then:
 npm run test:rum:loop
 ```
 
-**EKS:** `deploy/k8s/ai-agent-sim/rum-harness-dual.yaml` — build/push **`svelte-chatbot-rum-harness`** (`deploy/docker/Dockerfile.harness`); `kubectl apply -k deploy/k8s/ai-agent-sim/` includes a Deployment that runs the loop in-cluster against both frontends’ ClusterIPs.
+**EKS:** `deploy/k8s/ai-agent-sim/rum-harness-dual.yaml` — build/push **`corabot-ai-center-rum-harness`** (`deploy/docker/Dockerfile.harness`); `kubectl apply -k deploy/k8s/ai-agent-sim/` includes a Deployment that runs the loop in-cluster against both frontends’ ClusterIPs.
 
 Leave it in a dedicated terminal or run as a background job. If dev or API stops, later iterations fail until you restart those servers; the loop keeps scheduling.
 

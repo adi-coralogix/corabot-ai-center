@@ -6,10 +6,10 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: svelte-chatbot
+  name: corabot-ai-center
   namespace: ai-agent-sim
   labels:
-    app: svelte-chatbot
+    app: corabot-ai-center
   annotations:
     # alb.ingress.kubernetes.io/scheme: internet-facing
     # alb.ingress.kubernetes.io/target-type: ip

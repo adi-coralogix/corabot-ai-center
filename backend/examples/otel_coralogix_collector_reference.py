@@ -95,8 +95,8 @@ class OtelExportResult:
 
 def configure_traces_and_logs(
     *,
-    service_name: str = "svelte-chatbot",
-    application_name: str = "svelte-chatbot",
+    service_name: str = "corabot-ai-center",
+    application_name: str = "corabot-ai-center",
     subsystem_name: str = "chat-api",
 ) -> OtelExportResult:
     """Configure OpenTelemetry traces and OTLP logs (mirrors ``backend/main.py``).

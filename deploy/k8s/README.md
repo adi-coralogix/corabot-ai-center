@@ -23,16 +23,16 @@ From the **repository root**:
 ```bash
 export REGISTRY=123456789012.dkr.ecr.us-east-1.amazonaws.com   # your ECR registry
 
-docker build -t "${REGISTRY}/svelte-chatbot-backend:latest" -f deploy/docker/Dockerfile.backend .
+docker build -t "${REGISTRY}/corabot-ai-center-backend:latest" -f deploy/docker/Dockerfile.backend .
 
-docker build -t "${REGISTRY}/svelte-chatbot-frontend:latest" -f deploy/docker/Dockerfile.frontend .
+docker build -t "${REGISTRY}/corabot-ai-center-frontend:latest" -f deploy/docker/Dockerfile.frontend .
 
-docker push "${REGISTRY}/svelte-chatbot-backend:latest"
-docker push "${REGISTRY}/svelte-chatbot-frontend:latest"
+docker push "${REGISTRY}/corabot-ai-center-backend:latest"
+docker push "${REGISTRY}/corabot-ai-center-frontend:latest"
 
-docker build -t "${REGISTRY}/svelte-chatbot-rum-harness:latest" -f deploy/docker/Dockerfile.harness .
+docker build -t "${REGISTRY}/corabot-ai-center-rum-harness:latest" -f deploy/docker/Dockerfile.harness .
 
-docker push "${REGISTRY}/svelte-chatbot-rum-harness:latest"
+docker push "${REGISTRY}/corabot-ai-center-rum-harness:latest"
 ```
 
 Edit **`image:`** in `deploy/k8s/ai-agent-sim/chat-team-a.yaml`, `chat-team-b.yaml`, and **`rum-harness-dual.yaml`** if your registry or tags differ.
@@ -52,7 +52,7 @@ Then from repo root:
 kubectl apply -k deploy/k8s/ai-agent-sim/
 ```
 
-Confirm: `kubectl get secret svelte-chatbot-app -n ai-agent-sim` — `DATA` should reflect how many keys you defined.
+Confirm: `kubectl get secret corabot-ai-center-app -n ai-agent-sim` — `DATA` should reflect how many keys you defined.
 
 ### Coralogix Guardrails
 
@@ -81,7 +81,7 @@ From repo root after deploy:
 
 - **`./.logs/eks-frontend-public-urls.log`** — timestamped **`http://<nlb-hostname>/`** lines for Team A and Team B (append-only across deploys).
 - **`kubectl get svc -n ai-agent-sim 'chat-frontend-team-*'`** — `EXTERNAL-IP` / hostname column while `PENDING` clears.
-- **`frontend-public-url-logger` CronJob** (every **5 minutes**): resolves NLB hostnames, prints lines to **Job pod logs** (`kubectl logs -n ai-agent-sim -l app=frontend-public-url-logger --tail=100`), and sends the **same text** as **OTLP/JSON** logs to the in-namespace collector on **HTTP `:34318`** (team A → US2 pipeline) and **`:34328`** (team B → EU1). In each Coralogix account, search logs for **`frontend-public-url-logger`** or **`service.name`** = **`frontend-public-url-logger`** (resource also sets **`cx.application.name`** = `svelte-chatbot`, **`cx.subsystem.name`** = `public-url-logger`).
+- **`frontend-public-url-logger` CronJob** (every **5 minutes**): resolves NLB hostnames, prints lines to **Job pod logs** (`kubectl logs -n ai-agent-sim -l app=frontend-public-url-logger --tail=100`), and sends the **same text** as **OTLP/JSON** logs to the in-namespace collector on **HTTP `:34318`** (team A → US2 pipeline) and **`:34328`** (team B → EU1). In each Coralogix account, search logs for **`frontend-public-url-logger`** or **`service.name`** = **`frontend-public-url-logger`** (resource also sets **`cx.application.name`** = `corabot-ai-center`, **`cx.subsystem.name`** = `public-url-logger`).
 
 Traffic is **HTTP** on port 80 (no TLS on the NLB in this demo). Same-origin **`/api/*`** is still proxied by SvelteKit to each team’s backend via **`CHAT_API_ORIGIN`**.
 
@@ -146,4 +146,4 @@ For NLB-only demos, use **`http://`** until you terminate TLS elsewhere. Ensure 
 - Ingress 404 on `/api`: keep **`/api`** path **before** **`/`** (already ordered).
 - Collector CrashLoop: verify Secret keys **`coralogix-otel-key-team-a`** / **`…-b`** exist and match region.
 - No traces in a team: confirm that stack’s backend **and** frontend use the **same** collector port (`34317` vs `34327`) and that RUM key for that host matches the same Coralogix account as the OTLP key on that pipeline.
-- **`rum-harness-dual`** CrashLoop / OOM: ensure **`svelte-chatbot-rum-harness`** image is built and pushed; raise memory limit if Puppeteer/chrome needs it. Logs: `kubectl logs deployment/rum-harness-dual -n ai-agent-sim`.
+- **`rum-harness-dual`** CrashLoop / OOM: ensure **`corabot-ai-center-rum-harness`** image is built and pushed; raise memory limit if Puppeteer/chrome needs it. Logs: `kubectl logs deployment/rum-harness-dual -n ai-agent-sim`.

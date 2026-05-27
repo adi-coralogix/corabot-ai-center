@@ -59,13 +59,13 @@ build_push() {
 }
 
 if want backend; then
-	build_push svelte-chatbot-backend deploy/docker/Dockerfile.backend
+	build_push corabot-ai-center-backend deploy/docker/Dockerfile.backend
 fi
 if want frontend; then
-	build_push svelte-chatbot-frontend deploy/docker/Dockerfile.frontend
+	build_push corabot-ai-center-frontend deploy/docker/Dockerfile.frontend
 fi
 if want harness; then
-	build_push svelte-chatbot-rum-harness deploy/docker/Dockerfile.harness
+	build_push corabot-ai-center-rum-harness deploy/docker/Dockerfile.harness
 fi
 
 if [[ "$TARGET" == "all" ]]; then

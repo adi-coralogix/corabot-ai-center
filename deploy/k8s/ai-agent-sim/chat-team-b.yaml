@@ -30,15 +30,15 @@ spec:
     metadata:
       labels:
         app: chat-backend-team-b
-        app.kubernetes.io/name: svelte-chatbot
+        app.kubernetes.io/name: corabot-ai-center
         app.kubernetes.io/component: chat-api
       annotations:
-        resource.opentelemetry.io/service.name: svelte-chatbot
-        app.coralogix.com/service: svelte-chatbot
+        resource.opentelemetry.io/service.name: corabot-ai-center
+        app.coralogix.com/service: corabot-ai-center
     spec:
       containers:
         - name: api
-          image: 827602716714.dkr.ecr.us-west-2.amazonaws.com/svelte-chatbot-backend:latest
+          image: 827602716714.dkr.ecr.us-west-2.amazonaws.com/corabot-ai-center-backend:latest
           ports:
             - containerPort: 8000
               name: http
@@ -62,13 +62,13 @@ spec:
             - name: GEMINI_API_KEY
               valueFrom:
                 secretKeyRef:
-                  name: svelte-chatbot-app
+                  name: corabot-ai-center-app
                   key: gemini-api-key
             # EU1 Guardrails key — must match TEAM_B ingest / `api.eu1` Guard REST.
             - name: CORALOGIX_GUARDRAILS_KEY
               valueFrom:
                 secretKeyRef:
-                  name: svelte-chatbot-app
+                  name: corabot-ai-center-app
                   key: coralogix-guardrails-key-team-b
                   optional: true
             - name: GUARDRAILS_ENABLED
@@ -130,15 +130,15 @@ spec:
     metadata:
       labels:
         app: chat-frontend-team-b
-        app.kubernetes.io/name: svelte-chatbot
+        app.kubernetes.io/name: corabot-ai-center
         app.kubernetes.io/component: chat-web
       annotations:
-        resource.opentelemetry.io/service.name: svelte-chatbot
-        app.coralogix.com/service: svelte-chatbot
+        resource.opentelemetry.io/service.name: corabot-ai-center
+        app.coralogix.com/service: corabot-ai-center
     spec:
       containers:
         - name: web
-          image: 827602716714.dkr.ecr.us-west-2.amazonaws.com/svelte-chatbot-frontend:latest
+          image: 827602716714.dkr.ecr.us-west-2.amazonaws.com/corabot-ai-center-frontend:latest
           ports:
             - containerPort: 3000
               name: http
@@ -152,7 +152,7 @@ spec:
             - name: PUBLIC_CORALOGIX_RUM_KEY
               valueFrom:
                 secretKeyRef:
-                  name: svelte-chatbot-app
+                  name: corabot-ai-center-app
                   key: rum-public-key-team-b
             - name: PUBLIC_CORALOGIX_DOMAIN
               value: EU1
