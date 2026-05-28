@@ -59,7 +59,7 @@ data:
         attributes:
           - key: cx.otel_integration.name
             action: upsert
-            value: corabot-ai-center-ai-agent-sim
+            value: coralogix-arcade-ai-agent-sim
           - key: k8s.cluster.name
             action: upsert
             value: ai-agent-sim-cluster

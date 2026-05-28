@@ -20,8 +20,8 @@ if (disabled) {
 	delete process.env.OTEL_EXPORTER_OTLP_HEADERS;
 	process.env.OTEL_RESOURCE_ATTRIBUTES =
 		process.env.OTEL_RESOURCE_ATTRIBUTES ||
-		'service.name=corabot-ai-center,cx.application.name=corabot-ai-center,cx.subsystem.name=chat-api,service.namespace=corabot';
-	process.env.OTEL_SERVICE_NAME = process.env.OTEL_SERVICE_NAME || 'corabot-ai-center';
+		'service.name=coralogix-arcade,cx.application.name=coralogix-arcade,cx.subsystem.name=chat-api,service.namespace=coralogix-arcade';
+	process.env.OTEL_SERVICE_NAME = process.env.OTEL_SERVICE_NAME || 'coralogix-arcade';
 	process.env.OTEL_NODE_RESOURCE_DETECTORS = 'env,host,os,process';
 	console.log('[OTEL] Exporting traces to local OTLP collector at', endpoint);
 
@@ -49,14 +49,14 @@ if (disabled) {
 						return isHealthPath(typeof path === 'string' ? path : '');
 					},
 					// Remap Docker-internal hostname "backend" → real service name so
-					// Coralogix dep-map shows corabot-ai-center→corabot-ai-center (1 service)
+					// Coralogix dep-map shows coralogix-arcade→coralogix-arcade (1 service)
 					// instead of a phantom "backend" peer node.
 					requestHook: (span, request) => {
 						const host = (typeof request === 'object' && request)
 							? (request.host || request.hostname || '')
 							: '';
 						if (String(host).split(':')[0] === 'backend') {
-							span.setAttribute('peer.service', 'corabot-ai-center');
+							span.setAttribute('peer.service', 'coralogix-arcade');
 						}
 					}
 				}

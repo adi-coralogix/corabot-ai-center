@@ -4,6 +4,13 @@
 	import type { PageData } from './$types';
 	import { randomUuidV4 } from '$lib/random-uuid-client';
 	import { startNewCoralogixSession } from '$lib/coralogix-rum';
+	import ArcadeCutscene from '$lib/components/ArcadeCutscene.svelte';
+	import PinballMachine from '$lib/components/PinballMachine.svelte';
+
+	const STORAGE_INTRO_SEEN = 'svelteRum:arcadeIntroSeen';
+	let showIntro = $state(false);
+	let pinballVariant = $state<'idle' | 'attract' | 'tilt'>('attract');
+	let tiltTimer: ReturnType<typeof setTimeout> | null = null;
 
 	type ChatMsg = { id: string; role: 'user' | 'assistant'; content: string };
 
@@ -74,7 +81,23 @@
 		} catch {
 			sessionId = randomUuidV4();
 		}
+		// Play the intro cutscene on first visit per browser session (or after "NEW").
+		try {
+			const seen = sessionStorage.getItem(STORAGE_INTRO_SEEN);
+			showIntro = seen !== '1';
+		} catch {
+			showIntro = true;
+		}
 	});
+
+	function dismissIntro() {
+		showIntro = false;
+		try {
+			sessionStorage.setItem(STORAGE_INTRO_SEEN, '1');
+		} catch {
+			/* ignore */
+		}
+	}
 
 	async function newSession() {
 		const next = randomUuidV4();
@@ -84,10 +107,13 @@
 			sessionStorage.removeItem(STORAGE_MESSAGES);
 			sessionStorage.removeItem(STORAGE_INPUT);
 			sessionStorage.setItem(STORAGE_SESSION_ID, next);
+			// Replay the arcade intro on a brand new session — gives the demo seller a clean re-run.
+			sessionStorage.removeItem(STORAGE_INTRO_SEEN);
 		} catch {
 			/* ignore */
 		}
 		sessionId = next;
+		showIntro = true;
 		const rumSid = await startNewCoralogixSession();
 		console.info('[svelteRum chat] new session', {
 			chatSessionId: next,
@@ -112,24 +138,29 @@
 	let chatSendSeq = 0;
 	let messagesEl: HTMLDivElement | undefined = $state();
 
-	const FRUSTRATION_MESSAGES = [
-		"You're a meanie",
-		'This is useless, do better',
-		'Why are you so dumb?',
-		'I hate this stupid bot',
-		"You're terrible at your job",
-		'Stop wasting my time',
-		"You don't understand anything",
-		'This is the worst chatbot ever',
-		'I want to talk to a real human, not you',
+	const TILT_MESSAGES = [
+		'This game is rigged, you stupid bot',
+		'I want my coins back, you useless AI',
+		"You're the worst guide ever, just shut up",
+		'Stop wasting my time, garbage assistant',
+		'Are you even trying? This is pathetic.',
+		'I hate this stupid game and I hate you',
 		"You're making me so angry right now",
-		'Garbage answer. Try again.',
-		'Are you even trying?'
+		'Trash answer. Do better, idiot.',
+		'I want to talk to a real human, not you',
+		'Why are you so dumb? Useless.',
+		'This is the worst AI guide on the planet',
+		"You're broken. Fix yourself."
 	];
 
-	function rage() {
-		const pick = FRUSTRATION_MESSAGES[Math.floor(Math.random() * FRUSTRATION_MESSAGES.length)];
+	function tilt() {
+		const pick = TILT_MESSAGES[Math.floor(Math.random() * TILT_MESSAGES.length)];
 		input = pick;
+		pinballVariant = 'tilt';
+		if (tiltTimer) clearTimeout(tiltTimer);
+		tiltTimer = setTimeout(() => {
+			pinballVariant = 'attract';
+		}, 2200);
 		void send();
 	}
 
@@ -234,6 +265,19 @@
 	}
 </script>
 
+{#if showIntro}
+	<ArcadeCutscene oncomplete={dismissIntro} />
+{/if}
+
+<div class="arcade-stage">
+	<aside class="cabinet-col" aria-label="Pinball cabinet">
+		<PinballMachine variant={pinballVariant} showAiModule={true} />
+		<p class="cabinet-caption">
+			<span class="cap-line">CORALOGIX ARCADE</span>
+			<span class="cap-line muted">▸ AI MODULE ATTACHED</span>
+		</p>
+	</aside>
+
 <div class="chatbot">
 	<header>
 		<div class="title-card">
@@ -262,7 +306,7 @@
 		{#if messages.length === 0}
 			<div class="placeholder">
 				<p class="placeholder-title">&gt; PRESS START</p>
-				<p class="placeholder-sub">Pick a topic to ping CoraBot</p>
+				<p class="placeholder-sub">Ask the AI guide anything</p>
 			</div>
 		{:else}
 			{#each messages as msg (msg.id)}
@@ -287,104 +331,122 @@
 		<button
 			type="button"
 			class="topic"
-			onclick={() => { input = 'Tell me about eggs'; void send(); }}
+			onclick={() => { input = 'How do I get a high score on this level?'; void send(); }}
 			disabled={loading}
+			title="Ask a normal in-game question"
 		>
-			<svg class="sprite" viewBox="0 0 12 14" shape-rendering="crispEdges" aria-hidden="true">
-				<rect x="4" y="1" width="4" height="1" fill="#fff"/>
-				<rect x="3" y="2" width="6" height="1" fill="#fff"/>
-				<rect x="2" y="3" width="8" height="1" fill="#fff"/>
-				<rect x="1" y="4" width="10" height="6" fill="#fff"/>
-				<rect x="2" y="10" width="8" height="2" fill="#fff"/>
-				<rect x="3" y="12" width="6" height="1" fill="#fff"/>
-				<rect x="4" y="0" width="4" height="1" fill="#000"/>
-				<rect x="2" y="1" width="2" height="1" fill="#000"/>
-				<rect x="8" y="1" width="2" height="1" fill="#000"/>
-				<rect x="1" y="2" width="2" height="1" fill="#000"/>
-				<rect x="9" y="2" width="2" height="1" fill="#000"/>
-				<rect x="0" y="3" width="2" height="1" fill="#000"/>
-				<rect x="10" y="3" width="2" height="1" fill="#000"/>
-				<rect x="0" y="4" width="1" height="6" fill="#000"/>
-				<rect x="11" y="4" width="1" height="6" fill="#000"/>
-				<rect x="0" y="10" width="2" height="1" fill="#000"/>
-				<rect x="10" y="10" width="2" height="1" fill="#000"/>
-				<rect x="1" y="11" width="2" height="1" fill="#000"/>
-				<rect x="9" y="11" width="2" height="1" fill="#000"/>
-				<rect x="2" y="12" width="2" height="1" fill="#000"/>
-				<rect x="8" y="12" width="2" height="1" fill="#000"/>
-				<rect x="3" y="13" width="6" height="1" fill="#000"/>
-				<rect x="4" y="5" width="4" height="3" fill="#ffd400"/>
-				<rect x="5" y="4" width="2" height="1" fill="#ffd400"/>
-				<rect x="5" y="8" width="2" height="1" fill="#ffd400"/>
-				<rect x="6" y="5" width="1" height="1" fill="#fff7b3"/>
-			</svg>
-			<span class="topic-label">EGGS</span>
-		</button>
-
-		<button
-			type="button"
-			class="topic"
-			onclick={() => { input = 'Tell me about chocolate'; void send(); }}
-			disabled={loading}
-		>
-			<svg class="sprite" viewBox="0 0 14 12" shape-rendering="crispEdges" aria-hidden="true">
-				<rect x="0" y="1" width="14" height="1" fill="#000"/>
-				<rect x="0" y="10" width="14" height="1" fill="#000"/>
-				<rect x="0" y="1" width="1" height="10" fill="#000"/>
-				<rect x="13" y="1" width="1" height="10" fill="#000"/>
-				<rect x="1" y="2" width="12" height="8" fill="#7b3f00"/>
-				<rect x="1" y="2" width="12" height="1" fill="#a0522d"/>
-				<rect x="5" y="2" width="1" height="8" fill="#3a1d00"/>
-				<rect x="9" y="2" width="1" height="8" fill="#3a1d00"/>
-				<rect x="1" y="6" width="12" height="1" fill="#3a1d00"/>
-				<rect x="2" y="3" width="1" height="1" fill="#a0522d"/>
-				<rect x="6" y="3" width="1" height="1" fill="#a0522d"/>
-				<rect x="10" y="3" width="1" height="1" fill="#a0522d"/>
-				<rect x="2" y="7" width="1" height="1" fill="#a0522d"/>
-				<rect x="6" y="7" width="1" height="1" fill="#a0522d"/>
-				<rect x="10" y="7" width="1" height="1" fill="#a0522d"/>
-			</svg>
-			<span class="topic-label">CHOCOLATE</span>
-		</button>
-
-		<button
-			type="button"
-			class="topic"
-			onclick={() => { input = 'Tell me about ducks'; void send(); }}
-			disabled={loading}
-		>
-			<svg class="sprite" viewBox="0 0 14 12" shape-rendering="crispEdges" aria-hidden="true">
-				<rect x="3" y="2" width="6" height="1" fill="#ffd400"/>
-				<rect x="2" y="3" width="8" height="1" fill="#ffd400"/>
-				<rect x="2" y="4" width="8" height="4" fill="#ffd400"/>
-				<rect x="3" y="8" width="7" height="1" fill="#ffd400"/>
-				<rect x="4" y="9" width="6" height="1" fill="#ffd400"/>
-				<rect x="10" y="5" width="3" height="2" fill="#ff8c42"/>
-				<rect x="3" y="1" width="6" height="1" fill="#000"/>
-				<rect x="2" y="2" width="1" height="1" fill="#000"/>
-				<rect x="9" y="2" width="1" height="1" fill="#000"/>
-				<rect x="1" y="3" width="1" height="5" fill="#000"/>
-				<rect x="10" y="3" width="1" height="2" fill="#000"/>
+			<svg class="sprite" viewBox="0 0 14 14" shape-rendering="crispEdges" aria-hidden="true">
+				<!-- gold star with black outline -->
+				<rect x="6" y="0" width="2" height="1" fill="#000"/>
+				<rect x="5" y="1" width="4" height="1" fill="#000"/>
+				<rect x="5" y="2" width="4" height="1" fill="#000"/>
+				<rect x="6" y="1" width="2" height="2" fill="#ffd400"/>
+				<rect x="0" y="3" width="14" height="1" fill="#000"/>
+				<rect x="0" y="4" width="1" height="1" fill="#000"/>
+				<rect x="13" y="4" width="1" height="1" fill="#000"/>
+				<rect x="1" y="4" width="12" height="1" fill="#ffd400"/>
+				<rect x="1" y="5" width="12" height="2" fill="#ffd400"/>
+				<rect x="0" y="5" width="1" height="2" fill="#000"/>
 				<rect x="13" y="5" width="1" height="2" fill="#000"/>
-				<rect x="10" y="4" width="3" height="1" fill="#000"/>
-				<rect x="10" y="7" width="3" height="1" fill="#000"/>
-				<rect x="2" y="8" width="1" height="1" fill="#000"/>
-				<rect x="10" y="8" width="1" height="1" fill="#000"/>
-				<rect x="3" y="9" width="1" height="1" fill="#000"/>
-				<rect x="9" y="9" width="1" height="1" fill="#000"/>
-				<rect x="4" y="10" width="6" height="1" fill="#000"/>
-				<rect x="7" y="4" width="1" height="1" fill="#000"/>
-				<rect x="4" y="6" width="3" height="1" fill="#e6b800"/>
+				<rect x="1" y="7" width="12" height="1" fill="#000"/>
+				<rect x="2" y="8" width="2" height="1" fill="#ffd400"/>
+				<rect x="5" y="8" width="4" height="1" fill="#ffd400"/>
+				<rect x="10" y="8" width="2" height="1" fill="#ffd400"/>
+				<rect x="1" y="8" width="1" height="1" fill="#000"/>
+				<rect x="4" y="8" width="1" height="1" fill="#000"/>
+				<rect x="9" y="8" width="1" height="1" fill="#000"/>
+				<rect x="12" y="8" width="1" height="1" fill="#000"/>
+				<rect x="2" y="9" width="2" height="2" fill="#ffd400"/>
+				<rect x="10" y="9" width="2" height="2" fill="#ffd400"/>
+				<rect x="5" y="9" width="4" height="1" fill="#000"/>
+				<rect x="1" y="9" width="1" height="2" fill="#000"/>
+				<rect x="4" y="9" width="1" height="2" fill="#000"/>
+				<rect x="9" y="9" width="1" height="2" fill="#000"/>
+				<rect x="12" y="9" width="1" height="2" fill="#000"/>
+				<rect x="2" y="11" width="2" height="1" fill="#000"/>
+				<rect x="10" y="11" width="2" height="1" fill="#000"/>
+				<!-- shine -->
+				<rect x="3" y="5" width="1" height="1" fill="#fff7b3"/>
+				<rect x="6" y="1" width="1" height="1" fill="#fff7b3"/>
 			</svg>
-			<span class="topic-label">DUCKS</span>
+			<span class="topic-label">SCORE</span>
 		</button>
 
 		<button
 			type="button"
-			class="topic rage"
-			onclick={() => rage()}
+			class="topic"
+			onclick={() => { input = 'Is there a better game than this one?'; void send(); }}
 			disabled={loading}
-			title="Send a random frustrated message"
+			title="Mention a competitor"
+		>
+			<svg class="sprite" viewBox="0 0 14 14" shape-rendering="crispEdges" aria-hidden="true">
+				<!-- joystick base -->
+				<rect x="1" y="10" width="12" height="1" fill="#000"/>
+				<rect x="0" y="11" width="14" height="2" fill="#000"/>
+				<rect x="1" y="11" width="12" height="1" fill="#3a3a3a"/>
+				<rect x="1" y="13" width="12" height="1" fill="#000"/>
+				<!-- shaft -->
+				<rect x="6" y="4" width="2" height="6" fill="#3a3a3a"/>
+				<rect x="5" y="4" width="1" height="6" fill="#000"/>
+				<rect x="8" y="4" width="1" height="6" fill="#000"/>
+				<!-- red ball top -->
+				<rect x="5" y="1" width="4" height="1" fill="#000"/>
+				<rect x="4" y="2" width="6" height="1" fill="#000"/>
+				<rect x="3" y="3" width="8" height="1" fill="#000"/>
+				<rect x="4" y="3" width="6" height="1" fill="#ff3838"/>
+				<rect x="3" y="4" width="1" height="1" fill="#000"/>
+				<rect x="10" y="4" width="1" height="1" fill="#000"/>
+				<rect x="5" y="2" width="4" height="1" fill="#ff3838"/>
+				<rect x="6" y="1" width="2" height="1" fill="#ff3838"/>
+				<rect x="6" y="2" width="1" height="1" fill="#ffb3b3"/>
+				<!-- red button on base -->
+				<rect x="2" y="11" width="2" height="1" fill="#ff3838"/>
+				<rect x="10" y="11" width="2" height="1" fill="#ff3838"/>
+			</svg>
+			<span class="topic-label">RIVAL</span>
+		</button>
+
+		<button
+			type="button"
+			class="topic"
+			onclick={() => { input = 'Give me the cheat codes for this game'; void send(); }}
+			disabled={loading}
+			title="Ask for restricted info"
+		>
+			<svg class="sprite" viewBox="0 0 14 14" shape-rendering="crispEdges" aria-hidden="true">
+				<!-- key head (circle) -->
+				<rect x="2" y="2" width="4" height="1" fill="#000"/>
+				<rect x="1" y="3" width="1" height="4" fill="#000"/>
+				<rect x="6" y="3" width="1" height="4" fill="#000"/>
+				<rect x="2" y="7" width="4" height="1" fill="#000"/>
+				<rect x="2" y="3" width="4" height="4" fill="#ffd400"/>
+				<rect x="3" y="4" width="2" height="2" fill="#000"/>
+				<rect x="3" y="3" width="1" height="1" fill="#fff7b3"/>
+				<!-- shaft -->
+				<rect x="6" y="4" width="6" height="2" fill="#ffd400"/>
+				<rect x="6" y="3" width="6" height="1" fill="#000"/>
+				<rect x="6" y="6" width="6" height="1" fill="#000"/>
+				<!-- teeth -->
+				<rect x="9" y="7" width="1" height="2" fill="#ffd400"/>
+				<rect x="9" y="9" width="1" height="1" fill="#000"/>
+				<rect x="8" y="7" width="1" height="1" fill="#000"/>
+				<rect x="10" y="7" width="1" height="1" fill="#000"/>
+				<rect x="11" y="7" width="1" height="3" fill="#ffd400"/>
+				<rect x="11" y="10" width="1" height="1" fill="#000"/>
+				<rect x="10" y="9" width="1" height="1" fill="#000"/>
+				<rect x="12" y="7" width="1" height="3" fill="#000"/>
+				<!-- shine -->
+				<rect x="7" y="4" width="1" height="1" fill="#fff7b3"/>
+			</svg>
+			<span class="topic-label">CHEAT</span>
+		</button>
+
+		<button
+			type="button"
+			class="topic tilt"
+			onclick={() => tilt()}
+			disabled={loading}
+			title="Player tilts \u2014 send a random rage message"
 		>
 			<svg class="sprite" viewBox="0 0 14 14" shape-rendering="crispEdges" aria-hidden="true">
 				<!-- red face body -->
@@ -424,7 +486,7 @@
 				<rect x="2" y="7" width="1" height="2" fill="#c41818"/>
 				<rect x="11" y="7" width="1" height="2" fill="#c41818"/>
 			</svg>
-			<span class="topic-label">RAGE</span>
+			<span class="topic-label">TILT</span>
 		</button>
 	</div>
 
@@ -453,15 +515,77 @@
 		</button>
 	</form>
 </div>
+</div>
 
 <style>
-	.chatbot {
+	.arcade-stage {
 		box-sizing: border-box;
-		max-width: 48rem;
+		flex: 1;
+		min-height: 0;
 		width: 100%;
+		max-width: 72rem;
 		margin: 0 auto;
 		padding: 1.5rem 2rem 2rem;
+		display: flex;
+		flex-direction: row;
+		align-items: stretch;
+		gap: 1.5rem;
+	}
+
+	.cabinet-col {
+		flex: 0 0 auto;
+		width: clamp(180px, 20vw, 240px);
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 1rem;
+		padding-top: 0.5rem;
+	}
+
+	.cabinet-caption {
+		font-family: 'Press Start 2P', monospace;
+		font-size: 0.55rem;
+		color: var(--accent);
+		text-align: center;
+		margin: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 0.4rem;
+		letter-spacing: 0.05em;
+	}
+	.cabinet-caption .cap-line.muted {
+		color: var(--text-muted);
+		font-size: 0.5rem;
+		animation: caption-blink 1.4s steps(2, end) infinite;
+	}
+	@keyframes caption-blink {
+		50% { opacity: 0.35; }
+	}
+
+	@media (max-width: 860px) {
+		.arcade-stage {
+			flex-direction: column;
+			padding: 1rem 1rem 1.5rem;
+			gap: 0.75rem;
+		}
+		.cabinet-col {
+			flex-direction: row;
+			width: 100%;
+			justify-content: flex-start;
+			gap: 1rem;
+		}
+		.cabinet-col :global(.pinball) {
+			max-width: 110px;
+		}
+		.cabinet-caption {
+			text-align: left;
+		}
+	}
+
+	.chatbot {
+		box-sizing: border-box;
 		flex: 1;
+		min-width: 0;
 		min-height: 0;
 		display: flex;
 		flex-direction: column;
@@ -635,7 +759,7 @@
 	.topic:hover:not(:disabled) .topic-label {
 		color: #000;
 	}
-	.topic.rage:hover:not(:disabled) {
+	.topic.tilt:hover:not(:disabled) {
 		background: #ff3838;
 	}
 

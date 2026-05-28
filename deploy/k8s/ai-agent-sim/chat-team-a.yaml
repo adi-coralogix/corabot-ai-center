@@ -33,8 +33,8 @@ spec:
         app.kubernetes.io/name: corabot-ai-center
         app.kubernetes.io/component: chat-api
       annotations:
-        resource.opentelemetry.io/service.name: corabot-ai-center
-        app.coralogix.com/service: corabot-ai-center
+        resource.opentelemetry.io/service.name: coralogix-arcade
+        app.coralogix.com/service: coralogix-arcade
     spec:
       containers:
         - name: api
@@ -132,8 +132,8 @@ spec:
         app.kubernetes.io/name: corabot-ai-center
         app.kubernetes.io/component: chat-web
       annotations:
-        resource.opentelemetry.io/service.name: corabot-ai-center
-        app.coralogix.com/service: corabot-ai-center
+        resource.opentelemetry.io/service.name: coralogix-arcade
+        app.coralogix.com/service: coralogix-arcade
     spec:
       containers:
         - name: web

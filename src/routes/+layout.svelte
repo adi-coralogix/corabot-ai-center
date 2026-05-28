@@ -71,7 +71,7 @@
 </style>
 
 <svelte:head>
-	<title>CoraBot - AI Center Demo</title>
+	<title>Coralogix Arcade — AI Center Demo</title>
 	<link rel="icon" href={favicon} />
 </svelte:head>
 

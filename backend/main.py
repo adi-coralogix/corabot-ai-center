@@ -126,8 +126,8 @@ if _otel_export_enabled:
 
     _resource = Resource.create(
         {
-            SERVICE_NAME: "corabot-ai-center",
-            "cx.application.name": "corabot-ai-center",
+            SERVICE_NAME: "coralogix-arcade",
+            "cx.application.name": "coralogix-arcade",
             "cx.subsystem.name": "chat-api",
         }
     )
@@ -328,7 +328,7 @@ _GUARDRAILS_ENFORCE = os.getenv("GUARDRAILS_ENABLED", "false").lower() in (
 _guardrails: Guardrails | None = None
 if _guardrails_key:
     _guardrails = Guardrails(
-        application_name="corabot-ai-center",
+        application_name="coralogix-arcade",
         subsystem_name="chat-api",
         api_key=_guardrails_key,
         cx_guardrails_endpoint=_guardrails_endpoint,
@@ -530,7 +530,7 @@ async def chat(http_request: Request, body: ChatRequest):
     )
     ctx = otel_baggage.set_baggage("synthetic.session", "true" if is_harness else "false", context=ctx)
     if is_harness:
-        ctx = otel_baggage.set_baggage("cx.application.name", "corabot-ai-center-synthetic", context=ctx)
+        ctx = otel_baggage.set_baggage("cx.application.name", "coralogix-arcade-synthetic", context=ctx)
         ctx = otel_baggage.set_baggage("cx.subsystem.name", "chat-api-synthetic", context=ctx)
     _baggage_token = otel_context.attach(ctx)
 
@@ -542,7 +542,7 @@ async def chat(http_request: Request, body: ChatRequest):
         )
         request_span.set_attribute("synthetic.session", is_harness)
         if is_harness:
-            request_span.set_attribute("cx.application.name", "corabot-ai-center-synthetic")
+            request_span.set_attribute("cx.application.name", "coralogix-arcade-synthetic")
             request_span.set_attribute("cx.subsystem.name", "chat-api-synthetic")
         if body.session_id:
             request_span.set_attribute("gen_ai.conversation.id", body.session_id)
@@ -559,7 +559,7 @@ async def chat(http_request: Request, body: ChatRequest):
             "session_id": body.session_id or "",
             "deployment_environment": "synthetic" if is_harness else "production",
             "cx_application_name": (
-                "corabot-ai-center-synthetic" if is_harness else "corabot-ai-center"
+                "coralogix-arcade-synthetic" if is_harness else "coralogix-arcade"
             ),
             "cx_subsystem_name": "chat-api-synthetic" if is_harness else "chat-api",
         },
@@ -625,7 +625,13 @@ async def chat(http_request: Request, body: ChatRequest):
         {
             "role": "system",
             "content": (
-                "You are CoraBot, a concise assistant. Reply in 1-3 short sentences. "
+                "You are CoraBot, the AI module bolted to the side of a pinball machine "
+                "in Coralogix Arcade. You live inside the machine and know everything about "
+                "it — the flippers, bumpers, tilt sensor, high scores, and the players. "
+                "Stay in character: speak like a wisecracking arcade cabinet AI. "
+                "Use pinball and arcade slang naturally (tilt, multiball, bumper, flipper, "
+                "drain, plunger, high score, credits, etc.). "
+                "Reply in 1-3 short punchy sentences. "
                 "No headings, lists, or markdown unless explicitly asked."
             ),
         },

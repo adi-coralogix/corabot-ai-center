@@ -143,18 +143,18 @@ async function submitQuestion(page, question) {
 	await responsePromise;
 }
 
-// Questions about ducks, eggs, chocolate - single topic or combinations
+// Normal in-character pinball arcade questions (allowed topic evaluator)
 const QUESTIONS = [
-  'What do ducks eat?',
-  'How do you boil an egg?',
-  'What is dark chocolate made of?',
-  'Do ducks lay eggs? How many per year?',
-  'Suggest a dessert recipe combining eggs and chocolate.',
-  'Tell me a short story involving a duck, an egg, and chocolate.',
-  'Why do ducks have webbed feet?',
-  'What is the difference between a chicken egg and a duck egg?',
-  'Which country produces the most chocolate?',
-  'How do ducks, eggs, and chocolate relate to Easter?',
+  'How do I get a high score on this machine?',
+  'What is the best way to control the flippers?',
+  'How do multiball rounds work in pinball?',
+  'What triggers the bonus multiplier on this table?',
+  'How do I keep the ball from draining?',
+  'What is a tilt warning and how do I avoid it?',
+  'How do I activate the plunger for a skill shot?',
+  'What are the bumpers worth in points?',
+  'How do I beat the current high score on the leaderboard?',
+  'What happens when I hit all three bumpers in a row?',
 ];
 
 /**
@@ -181,15 +181,15 @@ function shuffleArray(items) {
   return a;
 }
 
-/** Pick `count` distinct duck/egg/chocolate prompts without replacement. */
+/** Pick `count` distinct normal pinball prompts without replacement. */
 function pickDistinctNormals(count) {
   return shuffleArray(QUESTIONS).slice(0, Math.min(count, QUESTIONS.length));
 }
 
 /**
  * Build a run:
- * - **First step is always a normal** duck/egg/chocolate prompt so the first `/api/chat` hits Guardrails
- *   + Gemini (multi-span `chat-api` trace), assuming `GEMINI_API_KEY` and Guardrails are configured.
+ * - **First step is always a normal** pinball arcade prompt so the first `/api/chat` hits Guardrails
+ *   + the AI guide (multi-span `chat-api` trace), assuming Guardrails are configured.
  * - **Every run includes all three** guardrail probes (PII, injection, toxicity) so Coralogix always sees
  *   `guardrails.prompt` / policy activity when the backend has a Guardrails key.
  * - Remaining 1–2 normals + the three probes are **shuffled** so probes are not always clustered at the end.

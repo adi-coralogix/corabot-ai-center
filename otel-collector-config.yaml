@@ -115,9 +115,9 @@ exporters:
     verbosity: normal
   # private_key / domain / timeout apply to all signals (traces, metrics, logs) for this exporter.
   # Application/subsystem align with backend/main.py resource (cx.application.name / cx.subsystem.name):
-  # application_name=corabot-ai-center, subsystem_name=chat-api (resource attrs cx.application.name / cx.subsystem.name).
+  # application_name=coralogix-arcade, subsystem_name=chat-api (resource attrs cx.application.name / cx.subsystem.name).
   coralogix:
-    application_name: corabot-ai-center
+    application_name: coralogix-arcade
     application_name_attributes:
       - cx.application.name
     domain: us2.coralogix.com
@@ -213,7 +213,7 @@ processors:
     trace_statements:
       - context: span
         statements:
-          - 'set(attributes["peer.service"], "corabot-ai-center") where attributes["peer.service"] == "backend"'
+          - 'set(attributes["peer.service"], "coralogix-arcade") where attributes["peer.service"] == "backend"'
   transform/semconv:
     error_mode: ignore
     trace_statements:

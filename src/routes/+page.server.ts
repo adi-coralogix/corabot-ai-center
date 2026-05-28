@@ -1,5 +1,5 @@
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async () => ({
-	chatTitle: process.env.PUBLIC_CHAT_PAGE_TITLE?.trim() || 'CoraBot'
+	chatTitle: process.env.PUBLIC_CHAT_PAGE_TITLE?.trim() || 'Coralogix Arcade'
 });
