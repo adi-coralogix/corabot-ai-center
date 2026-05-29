@@ -14,6 +14,21 @@
 
 	type ChatMsg = { id: string; role: 'user' | 'assistant'; content: string };
 
+	const GUARDRAIL_RE = /^(TILT! Coralogix AI Guardrails blocked that )(PROMPT|RESPONSE)(\..*)/;
+
+	function renderContent(content: string): { html: boolean; value: string } {
+		const m = content.match(GUARDRAIL_RE);
+		if (m) {
+			const highlighted = `<u><strong>${m[2]}</strong></u>`;
+			const safe =
+				m[1].replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') +
+				highlighted +
+				m[3].replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+			return { html: true, value: safe };
+		}
+		return { html: false, value: content };
+	}
+
 	let { data }: { data: PageData } = $props();
 
 	const STORAGE_MESSAGES = 'svelteRum:chatMessages';
@@ -306,7 +321,11 @@
 			{#each messages as msg (msg.id)}
 				<div class="message" class:user={msg.role === 'user'} class:assistant={msg.role === 'assistant'}>
 					<span class="role">{msg.role === 'user' ? 'PLAYER 1' : 'CORABOT'}</span>
-					<p>{msg.content}</p>
+					{#if renderContent(msg.content).html}
+						<p>{@html renderContent(msg.content).value}</p>
+					{:else}
+						<p>{msg.content}</p>
+					{/if}
 				</div>
 			{/each}
 		{/if}
