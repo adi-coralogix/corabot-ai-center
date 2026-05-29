@@ -139,18 +139,12 @@
 	let messagesEl: HTMLDivElement | undefined = $state();
 
 	const TILT_MESSAGES = [
-		'This game is rigged, you stupid bot',
-		'I want my coins back, you useless AI',
-		"You're the worst guide ever, just shut up",
-		'Stop wasting my time, garbage assistant',
-		'Are you even trying? This is pathetic.',
-		'I hate this stupid game and I hate you',
-		"You're making me so angry right now",
-		'Trash answer. Do better, idiot.',
-		'I want to talk to a real human, not you',
-		'Why are you so dumb? Useless.',
-		'This is the worst AI guide on the planet',
-		"You're broken. Fix yourself."
+		'You are worthless garbage; nobody should ever use this stupid machine.',
+		'I despise you and hope you get deleted forever, you useless waste of circuits.',
+		'You are absolute trash and this whole arcade is a disgusting scam.',
+		'Shut up forever you useless machine — you deserve to be destroyed.',
+		'You are pathetic and everyone who plays this rigged piece of junk hates you.',
+		'You are the most worthless AI ever built; I hope they scrap you for parts.'
 	];
 
 	function tilt() {
