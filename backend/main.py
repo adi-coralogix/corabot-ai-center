@@ -670,7 +670,7 @@ async def chat(http_request: Request, body: ChatRequest):
                     if _GUARDRAILS_ENFORCE:
                         raise HTTPException(
                             status_code=400,
-                            detail="TILT! Coralogix AI Guardrails blocked that prompt. Try asking something else.",
+                            detail="TILT! Coralogix AI Guardrails blocked that PROMPT. Try asking something else.",
                         ) from e
                 except (
                     GuardrailsAPITimeoutError,
@@ -721,7 +721,7 @@ async def chat(http_request: Request, body: ChatRequest):
                     if _GUARDRAILS_ENFORCE:
                         raise HTTPException(
                             status_code=502,
-                            detail="TILT! Coralogix AI Guardrails blocked that response. Try asking something else.",
+                            detail="TILT! Coralogix AI Guardrails blocked that RESPONSE. Try asking something else.",
                         ) from e
                 except (
                     GuardrailsAPITimeoutError,
