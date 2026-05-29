@@ -721,7 +721,7 @@ async def chat(http_request: Request, body: ChatRequest):
                     if _GUARDRAILS_ENFORCE:
                         raise HTTPException(
                             status_code=502,
-                            detail="The assistant could not return a safe response. Please try again.",
+                            detail="TILT! CoraBot's response was blocked by Coralogix AI Guardrails. Try asking something else.",
                         ) from e
                 except (
                     GuardrailsAPITimeoutError,
