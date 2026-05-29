@@ -670,7 +670,7 @@ async def chat(http_request: Request, body: ChatRequest):
                     if _GUARDRAILS_ENFORCE:
                         raise HTTPException(
                             status_code=400,
-                            detail="Your message could not be processed. Please revise it and try again.",
+                            detail="TILT! Coralogix AI Guardrails blocked that message - Please revise your message.",
                         ) from e
                 except (
                     GuardrailsAPITimeoutError,

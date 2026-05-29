@@ -238,7 +238,7 @@
 							: 'Unknown error';
 				messages = [
 					...messages,
-					{ id: randomUuidV4(), role: 'assistant', content: `Error: ${detail}` }
+					{ id: randomUuidV4(), role: 'assistant', content: detail }
 				];
 				return;
 			}
